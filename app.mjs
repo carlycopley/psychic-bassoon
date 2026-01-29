@@ -1,5 +1,6 @@
 //app.mjs
 //we are in ES6, use this. 
+import 'dotenv/config';
 import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -10,9 +11,7 @@ import { MongoClient , ServerApiVersion } from 'mongodb';
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const uri = process.env.MONGO_URI;
-
-
+const uri = process.env.MONGO_URI; 
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
