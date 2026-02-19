@@ -29,7 +29,7 @@ jobs:
         env:
           SSH_USER: ccopley1 #${{ secrets.SSH_USER }}
           SSH_HOST: 34.16.210.217 #${{ secrets.SSH_HOST }}
-          APP_DIR:  app #${{ vars.APP_DIR }}
+          APP_DIR:  psychic-bassoon #${{ vars.APP_DIR }}
           PM2_NAME: app #${{ vars.PM2_NAME }}
         run: |
           ssh -i ~/.ssh/id_rsa -T "$SSH_USER@$SSH_HOST" <<EOF
