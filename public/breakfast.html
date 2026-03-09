@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Breakfast Buddy</title>
+
+    <style>
+        body {
+            background-color: #e2c4f3;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            color: #b45898;
+            text-align: center;
+            background-color: #ffffff;
+        }
+
+        h2,
+        h3 {
+            color: #b14490;
+        }
+
+        #inputSection,
+        #selectSection,
+        #logSection {
+            margin: 20px;
+            padding: 20px;
+            background-color: #f9e1f7;
+            border-radius: 10px;
+        }
+
+        #inputSection {
+            width: 400px;
+        }
+
+        #foodInput {
+            width: 75%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #createBtn,
+        #logBtn {
+            background-color: #b45898;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        #foodButtons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        #foodButtons button:not(.deleteBtn, .selected) {
+            background-color: #b993a9;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+
+        .selected {
+            background-color: rgb(155, 228, 155);
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+
+        .deleteBtn,
+        .deleteBtn2 {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 5px;
+            margin-left: 3px;
+            cursor: pointer;
+        }
+
+        .editBtn {
+            background-color: #b45898;
+            color: white;
+            border: none;
+            padding: 5px 5px;
+            margin-left: 3px; 
+            cursor: pointer;
+        }
+
+        #breakList li {
+            color: #b14490;
+            font-size: 18px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Welcome to Breakfast Buddy where you can track your breakfast every morning!</h1>
+
+    <div id="inputSection">
+        <h2>Create A New Breakfast Item Here</h2>
+
+        <input id="foodInput" type="text" placeholder="Add breakfast item">
+        <button id="createBtn" onclick="createFoodButton()">Create Button</button>
+    </div>
+
+    <div id="selectSection">
+        <h2>Select Today's Breakfast By Clicking On Your Existing Breakfast Items</h2>
+
+        <div id="foodButtons"></div>
+
+        <br>
+        <button id="logBtn" onclick="submitBreakfast()">Log Breakfast</button>
+    </div>
+
+    <div id="logSection">
+        <h2>Breakfast Log</h2>
+        <h3>Sorted From Newest to Oldest</h3>
+        <ul id="breakList"></ul>
+    </div>
+
+    <script>
+
+        /* Clean up for new breakfast item input */
+        document.getElementById("foodInput").addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                createFoodButton();
+            }
+        });
+
+        function createFoodButton() {
+            let food = document.getElementById("foodInput").value.trim();
+
+            if (food === "") return;
+            food = food.charAt(0).toUpperCase() + food.slice(1).toLowerCase();
+
+            const container = document.createElement("div");
+            const button = document.createElement("button");
+
+            button.textContent = food;
+            button.onclick = function () {
+                button.classList.toggle("selected");
+            };
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.textContent = "✕";
+            deleteBtn.classList.add("deleteBtn");
+
+            deleteBtn.onclick = function () {
+                container.remove();
+            };
+
+            container.appendChild(button);
+            container.appendChild(deleteBtn);
+
+            document.getElementById("foodButtons").appendChild(container);
+            document.getElementById("foodInput").value = ""; // clears textbox
+
+            sortButtons();
+        }
+
+        function sortButtons() {
+            const container = document.getElementById("foodButtons");
+            const items = Array.from(container.children);
+
+            items.sort((a, b) => {
+                const textA = a.querySelector("button").textContent;
+                const textB = b.querySelector("button").textContent;
+                return textA.localeCompare(textB);
+            });
+
+            container.innerHTML = "";
+            items.forEach(item => container.appendChild(item));
+        }
+
+        function submitBreakfast() {
+            const selected = document.querySelectorAll("#foodButtons button.selected");
+
+            if (selected.length === 0) return;
+
+            const foods = [];
+
+            selected.forEach(btn => {
+                foods.push(btn.textContent);
+                btn.classList.remove("selected");
+            });
+
+            const date = new Date().toLocaleString();
+
+            const li = document.createElement("li");
+
+            const textSpan = document.createElement("span");
+            textSpan.textContent = "(" + date + ") " + foods.join(", ");
+
+            const editBtn = document.createElement("button");
+            editBtn.classList.add("editBtn");
+            editBtn.textContent = "Edit";
+
+            editBtn.onclick = function () {
+                const newText = prompt("Edit this breakfast log:", textSpan.textContent);
+                if (newText && newText.trim() !== "") {
+                    textSpan.textContent = newText;
+                }
+            };
+
+            const deleteBtn2 = document.createElement("button");
+            deleteBtn2.classList.add("deleteBtn2");
+            deleteBtn2.textContent = "Delete";
+
+            deleteBtn2.onclick = function () {
+                li.remove();
+            };
+
+            li.appendChild(textSpan);
+            li.appendChild(editBtn);
+            li.appendChild(deleteBtn2);
+
+            document.getElementById("breakList").prepend(li);
+        }
+
+    </script>
+
+</body>
+
+</html>
