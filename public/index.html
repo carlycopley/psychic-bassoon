@@ -17,11 +17,14 @@
             background-color: #ffffff;
         }
 
-        h2, h3 {
+        h2,
+        h3 {
             color: #b14490;
         }
 
-        #inputSection, #selectSection, #logSection {
+        #inputSection,
+        #selectSection,
+        #logSection {
             margin: 20px;
             padding: 20px;
             background-color: #f9e1f7;
@@ -40,7 +43,8 @@
             border-radius: 5px;
         }
 
-        #createBtn, #logBtn {
+        #createBtn,
+        #logBtn {
             background-color: #b45898;
             color: white;
             border: none;
@@ -61,7 +65,7 @@
             border: none;
             padding: 10px 15px;
             cursor: pointer;
-        }        
+        }
 
         .selected {
             background-color: rgb(155, 228, 155);
@@ -70,11 +74,22 @@
             cursor: pointer;
         }
 
-        .deleteBtn {
+        .deleteBtn,
+        .deleteBtn2 {
             background-color: red;
             color: white;
             border: none;
             padding: 5px 5px;
+            margin-left: 3px;
+            cursor: pointer;
+        }
+
+        .editBtn {
+            background-color: #b45898;
+            color: white;
+            border: none;
+            padding: 5px 5px;
+            margin-left: 3px; 
             cursor: pointer;
         }
 
@@ -82,7 +97,6 @@
             color: #b14490;
             font-size: 18px;
         }
-
     </style>
 </head>
 
@@ -98,7 +112,7 @@
     </div>
 
     <div id="selectSection">
-        <h2>Select Today's Breakfast From Your Existing Breakfast Items</h2>
+        <h2>Select Today's Breakfast By Clicking On Your Existing Breakfast Items</h2>
 
         <div id="foodButtons"></div>
 
@@ -108,7 +122,7 @@
 
     <div id="logSection">
         <h2>Breakfast Log</h2>
-        <h3>Sorted Newest to Oldest</h3>
+        <h3>Sorted From Newest to Oldest</h3>
         <ul id="breakList"></ul>
     </div>
 
@@ -171,16 +185,44 @@
             const selected = document.querySelectorAll("#foodButtons button.selected");
 
             if (selected.length === 0) return;
+
             const foods = [];
+
             selected.forEach(btn => {
                 foods.push(btn.textContent);
                 btn.classList.remove("selected");
             });
 
             const date = new Date().toLocaleString();
+
             const li = document.createElement("li");
 
-            li.textContent = "(" + date + ") " + foods.join(", ");
+            const textSpan = document.createElement("span");
+            textSpan.textContent = "(" + date + ") " + foods.join(", ");
+
+            const editBtn = document.createElement("button");
+            editBtn.classList.add("editBtn");
+            editBtn.textContent = "Edit";
+
+            editBtn.onclick = function () {
+                const newText = prompt("Edit this breakfast log:", textSpan.textContent);
+                if (newText && newText.trim() !== "") {
+                    textSpan.textContent = newText;
+                }
+            };
+
+            const deleteBtn2 = document.createElement("button");
+            deleteBtn2.classList.add("deleteBtn2");
+            deleteBtn2.textContent = "Delete";
+
+            deleteBtn2.onclick = function () {
+                li.remove();
+            };
+
+            li.appendChild(textSpan);
+            li.appendChild(editBtn);
+            li.appendChild(deleteBtn2);
+
             document.getElementById("breakList").prepend(li);
         }
 
