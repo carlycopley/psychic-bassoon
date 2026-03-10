@@ -79,7 +79,6 @@
             background-color: red;
             color: white;
             border: none;
-            padding: 5px 5px;
             margin-left: 3px;
             cursor: pointer;
         }
@@ -88,8 +87,7 @@
             background-color: #b45898;
             color: white;
             border: none;
-            padding: 5px 5px;
-            margin-left: 3px; 
+            margin-left: 3px;
             cursor: pointer;
         }
 
@@ -127,8 +125,6 @@
     </div>
 
     <script>
-
-        /* Clean up for new breakfast item input */
         document.getElementById("foodInput").addEventListener("keydown", function (event) {
             if (event.key === "Enter") {
                 event.preventDefault();
@@ -136,97 +132,132 @@
             }
         });
 
-        function createFoodButton() {
+        async function createFoodButton() {
             let food = document.getElementById("foodInput").value.trim();
+            if (!food) return;
 
-            if (food === "") return;
             food = food.charAt(0).toUpperCase() + food.slice(1).toLowerCase();
+            document.getElementById("foodInput").value = "";
 
-            const container = document.createElement("div");
-            const button = document.createElement("button");
-
-            button.textContent = food;
-            button.onclick = function () {
-                button.classList.toggle("selected");
-            };
-
-            const deleteBtn = document.createElement("button");
-            deleteBtn.textContent = "✕";
-            deleteBtn.classList.add("deleteBtn");
-
-            deleteBtn.onclick = function () {
-                container.remove();
-            };
-
-            container.appendChild(button);
-            container.appendChild(deleteBtn);
-
-            document.getElementById("foodButtons").appendChild(container);
-            document.getElementById("foodInput").value = ""; // clears textbox
-
-            sortButtons();
-        }
-
-        function sortButtons() {
-            const container = document.getElementById("foodButtons");
-            const items = Array.from(container.children);
-
-            items.sort((a, b) => {
-                const textA = a.querySelector("button").textContent;
-                const textB = b.querySelector("button").textContent;
-                return textA.localeCompare(textB);
+            await fetch('/api/breakfast', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: food })
             });
 
-            container.innerHTML = "";
-            items.forEach(item => container.appendChild(item));
+            loadBreakfastItems(); // refresh buttons from server
         }
 
-        function submitBreakfast() {
-            const selected = document.querySelectorAll("#foodButtons button.selected");
+        async function loadBreakfastItems() {
+            try {
+                const res = await fetch('/api/breakfast');
+                const items = await res.json();
+                const container = document.getElementById('foodButtons');
+                container.innerHTML = '';
 
-            if (selected.length === 0) return;
+                items.forEach(item => {
+                    const div = document.createElement('div');
+                    const btn = document.createElement('button');
+                    btn.textContent = item.name;
+                    btn.onclick = () => btn.classList.toggle('selected');
 
-            const foods = [];
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = '✕';
+                    deleteBtn.classList.add('deleteBtn');
+                    deleteBtn.onclick = async () => {
+                        await fetch(`/api/breakfast/${item._id}`, { method: 'DELETE' });
+                        loadBreakfastItems();
+                    };
 
-            selected.forEach(btn => {
-                foods.push(btn.textContent);
-                btn.classList.remove("selected");
+                    div.appendChild(btn);
+                    div.appendChild(deleteBtn);
+                    container.appendChild(div);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function submitBreakfast() {
+            const selectedBtns = document.querySelectorAll("#foodButtons button.selected");
+            if (!selectedBtns.length) return;
+
+            const foods = Array.from(selectedBtns).map(b => b.textContent);
+            const date = new Date().toISOString();
+
+            await fetch('/api/logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ foods, date })
             });
 
-            const date = new Date().toLocaleString();
-
-            const li = document.createElement("li");
-
-            const textSpan = document.createElement("span");
-            textSpan.textContent = "(" + date + ") " + foods.join(", ");
-
-            const editBtn = document.createElement("button");
-            editBtn.classList.add("editBtn");
-            editBtn.textContent = "Edit";
-
-            editBtn.onclick = function () {
-                const newText = prompt("Edit this breakfast log:", textSpan.textContent);
-                if (newText && newText.trim() !== "") {
-                    textSpan.textContent = newText;
-                }
-            };
-
-            const deleteBtn2 = document.createElement("button");
-            deleteBtn2.classList.add("deleteBtn2");
-            deleteBtn2.textContent = "Delete";
-
-            deleteBtn2.onclick = function () {
-                li.remove();
-            };
-
-            li.appendChild(textSpan);
-            li.appendChild(editBtn);
-            li.appendChild(deleteBtn2);
-
-            document.getElementById("breakList").prepend(li);
+            selectedBtns.forEach(btn => btn.classList.remove('selected'));
+            loadMealLogs(); // only render from server
         }
 
+        async function loadMealLogs() {
+            try {
+                const res = await fetch('/api/logs');
+                const logs = await res.json();
+                const ul = document.getElementById('breakList');
+                ul.innerHTML = '';
+
+                logs.sort((a, b) => new Date(b.date) - new Date(a.date)); // newest first
+
+                logs.forEach(log => {
+                    const li = document.createElement('li');
+
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = `(${new Date(log.date).toLocaleString()}) ${log.foods.join(', ')}`;
+
+                    const editBtn = document.createElement('button');
+                    editBtn.classList.add('editBtn');
+                    editBtn.textContent = 'Edit';
+
+                    editBtn.onclick = async () => {
+                        // Prompt for foods
+                        const newFoods = prompt('Edit this breakfast log (comma-separated):', log.foods.join(', '));
+                        if (!newFoods) return;
+                        const updatedFoods = newFoods.split(',').map(f => f.trim());
+
+                        // Prompt for date
+                        const newDate = prompt('Edit the date/time of this log:', log.date);
+                        if (!newDate) return;
+
+                        // Send PUT request to update both foods and date
+                        await fetch(`/api/logs/${log._id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ foods: updatedFoods, date: newDate })
+                        });
+
+                        loadMealLogs(); // refresh logs from server
+                    };
+
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.classList.add('deleteBtn2');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = async () => {
+                    await fetch(`/api/logs/${log._id}`, { method: 'DELETE' });
+                    loadMealLogs();
+                };
+
+                li.appendChild(textSpan);
+                li.appendChild(editBtn);
+                li.appendChild(deleteBtn);
+                ul.appendChild(li);
+            });
+        } catch (err) {
+            console.error(err);
+        }
+        }
+
+        loadBreakfastItems();
+        loadMealLogs();
     </script>
+
+
 
 </body>
 

@@ -1,239 +1,187 @@
-//app.mjs issue 20
-//we are in ES6, use this. 
-import 'dotenv/config'; 
+// app.mjs
+import 'dotenv/config';
 import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { readFile } from 'fs/promises';  // For async file reading
 import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb';
-
-//const { MongoClient, ServerApiVersion } = require('mongodb');
-
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const uri = process.env.MONGO_URI;  
-const myVar = 'injected from server'; // Declare your variable
-
+const uri = process.env.MONGO_URI;
 
 app.use(express.static(join(__dirname, 'public')));
-app.use(express.json()); 
+app.use(express.json());
 
-
-
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+// Mongo Client
 const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
+  serverApi: { version: ServerApiVersion.v1, strict: true, deprecationErrors: true }
 });
 
 async function connectToMongo() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
+    await client.db('admin').command({ ping: 1 });
+    console.log("MongoDB connected!");
+  } catch (err) {
+    console.error(err);
   }
 }
 connectToMongo();
 
-
-// middlewares aka endpoints aka 'get to slash' {http verb} to slash {you name ur endpoint}
+// Serve index.html
 app.get('/', (req, res) => {
-  // res.send('Hello Express'); //string response
-  // res.sendFile('index.html'); // <- this don't work w/o imports, assign, and arguements
-  res.sendFile(join(__dirname, 'public', 'index.html')) ;
-
-})
-
-app.get('/inject', (req, res) => {
-  // Inject a server variable into barry.html: templating view like ejs or pug
-  readFile(join(__dirname, 'public', 'index.html'), 'utf8')
-    .then(html => {
-      // Replace a placeholder in the HTML (e.g., {{myVar}})
-      const injectedHtml = html.replace('{{myVar}}', myVar);
-      res.send(injectedHtml);
-    })
-    .catch(err => {
-      res.status(500).send('Error loading page');
-    });
-})
-
-// API Health/Endpoints Documentation
-app.get('/api/health', (req, res) => {
-  const endpoints = [
-    {
-      method: 'GET',
-      path: '/',
-      description: 'Serve the main HTML page'
-    },
-    {
-      method: 'GET',
-      path: '/inject',
-      description: 'Serve HTML with server-side variable injection'
-    },
-    {
-      method: 'GET',
-      path: '/api/health',
-      description: 'Show all available API endpoints'
-    },
-    {
-      method: 'GET',
-      path: '/api/class',
-      description: 'Get class information (course details)'
-    },
-    {
-      method: 'POST',
-      path: '/api/attendance',
-      description: 'CREATE - Add new student attendance record',
-      bodyExample: {
-        studentName: 'John Doe',
-        date: 'February 3, 2026',
-        keyword: 'devops'
-      }
-    },
-    {
-      method: 'GET',
-      path: '/api/attendance',
-      description: 'READ - Get all attendance records'
-    },
-    {
-      method: 'PUT',
-      path: '/api/attendance/:id',
-      description: 'UPDATE - Update existing attendance record',
-      bodyExample: {
-        studentName: 'Jane Doe',
-        date: 'February 3, 2026',
-        keyword: 'mongodb'
-      }
-    },
-    {
-      method: 'DELETE',
-      path: '/api/attendance/:id',
-      description: 'DELETE - Remove attendance record'
-    }
-  ];
-
-  res.json({
-    status: 'healthy',
-    server: 'CIS 486 DevOps Server',
-    timestamp: new Date().toISOString(),
-    endpoints: endpoints
-  });
+  res.sendFile(join(__dirname, 'public', 'index.html'));
 });
 
-// Class Information API
-app.get('/api/class', (req, res) => {
-  const classInfo = {
-    courseNumber: 'CIS 486',
-    courseName: 'Projects in IS',
-    nickname: 'Full Stack DevOps',
-    semester: 'Spring 2026',
-    calendar: 'Class calendar coming soon!'
-  };
-  res.json(classInfo);
-});
+// -----------------------------
+// Breakfast Items CRUD
+// -----------------------------
 
-// CRUD Operations for Attendance
-
-// CREATE - Add student attendance
-app.post('/api/attendance', async (req, res) => {
+// CREATE - new breakfast item
+app.post('/api/breakfast', async (req, res) => {
   try {
-    const { studentName, date, keyword } = req.body;
-    
-    if (!studentName || !date || !keyword) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: 'Missing name' });
 
-    const db = client.db('cis486');
-    const collection = db.collection('attendance');
-    
-    const attendanceRecord = {
-      studentName,
-      date,
-      keyword,
-      timestamp: new Date()
-    };
-    
-    const result = await collection.insertOne(attendanceRecord);
-    res.json({ message: 'Attendance recorded!', id: result.insertedId });
-  } catch (error) {
-    console.error('Error creating attendance:', error);
-    res.status(500).json({ error: 'Failed to record attendance' });
+    const db = client.db('breakfastBuddy');
+    const col = db.collection('items');
+    const result = await col.insertOne({ name });
+    res.json({ message: 'Breakfast item created', id: result.insertedId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create item' });
   }
 });
 
-// READ - Get all attendance records
-app.get('/api/attendance', async (req, res) => {
+// READ - all breakfast items
+app.get('/api/breakfast', async (req, res) => {
   try {
-    const db = client.db('cis486');
-    const collection = db.collection('attendance');
-    
-    const records = await collection.find({}).toArray();
-    res.json(records);
-  } catch (error) {
-    console.error('Error reading attendance:', error);
-    res.status(500).json({ error: 'Failed to get attendance records' });
+    const db = client.db('breakfastBuddy');
+    const col = db.collection('items');
+    const items = await col.find({}).toArray();
+    res.json(items);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to get items' });
   }
 });
 
-// UPDATE - Update attendance record
-app.put('/api/attendance/:id', async (req, res) => {
+// DELETE - remove breakfast item
+app.delete('/api/breakfast/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { studentName, date, keyword } = req.body;
-    
-    const db = client.db('cis486');
-    const collection = db.collection('attendance');
-    
-    const result = await collection.updateOne(
+    const db = client.db('breakfastBuddy');
+    const col = db.collection('items');
+    const result = await col.deleteOne({ _id: new ObjectId(id) });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Not found' });
+    res.json({ message: 'Deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete item' });
+  }
+});
+
+// -----------------------------
+// Meal Logs CRUD
+// -----------------------------
+
+// CREATE - log a meal
+app.post('/api/logs', async (req, res) => {
+  try {
+    const { foods, date } = req.body;
+    if (!foods || !Array.isArray(foods)) return res.status(400).json({ error: 'Invalid foods' });
+
+    const db = client.db('breakfastBuddy');
+    const col = db.collection('logs');
+    const result = await col.insertOne({ foods, date });
+    res.json({ message: 'Meal logged', id: result.insertedId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to log meal' });
+  }
+});
+
+// READ - all meal logs
+app.get('/api/logs', async (req, res) => {
+  try {
+    const db = client.db('breakfastBuddy');
+    const col = db.collection('logs');
+    const logs = await col.find({}).toArray();
+    res.json(logs);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to get logs' });
+  }
+});
+
+app.put('/api/logs/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { foods, date } = req.body; // get both foods and date
+
+    const db = client.db('breakfastBuddy');
+    const col = db.collection('logs');
+
+    const result = await col.updateOne(
       { _id: new ObjectId(id) },
-      { $set: { studentName, date, keyword, updatedAt: new Date() } }
+      { $set: { foods, date } } // update both
     );
-    
+
     if (result.matchedCount === 0) {
-      return res.status(404).json({ error: 'Record not found' });
+      return res.status(404).json({ error: 'Log not found' });
     }
-    
-    res.json({ message: 'Attendance updated!' });
-  } catch (error) {
-    console.error('Error updating attendance:', error);
-    res.status(500).json({ error: 'Failed to update attendance' });
+
+    res.json({ message: 'Log updated!' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update log' });
   }
 });
 
-// DELETE - Delete attendance record
-app.delete('/api/attendance/:id', async (req, res) => {
+// UPDATE - edit a meal log
+app.put('/api/logs/:id', async (req, res) => {
+  try {
+    const { foods } = req.body;
+    const { id } = req.params;
+
+    if (!foods || !Array.isArray(foods)) {
+      return res.status(400).json({ error: 'Invalid foods array' });
+    }
+
+    const db = client.db('breakfastBuddy');
+    const col = db.collection('logs');
+
+    const result = await col.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { foods, updatedAt: new Date() } }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: 'Log not found' });
+    }
+
+    res.json({ message: 'Log updated!' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update log' });
+  }
+});
+
+// DELETE - remove a meal log
+app.delete('/api/logs/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const db = client.db('cis486');
-    const collection = db.collection('attendance');
-    
-    const result = await collection.deleteOne({ _id: new ObjectId(id) });
-    
-    if (result.deletedCount === 0) {
-      return res.status(404).json({ error: 'Record not found' });
-    }
-    
-    res.json({ message: 'Attendance deleted!' });
-  } catch (error) {
-    console.error('Error deleting attendance:', error);
-    res.status(500).json({ error: 'Failed to delete attendance' });
+    const db = client.db('breakfastBuddy');
+    const col = db.collection('logs');
+    const result = await col.deleteOne({ _id: new ObjectId(id) });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Not found' });
+    res.json({ message: 'Log deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete log' });
   }
 });
 
-
-
-//start the server. 
-app.listen(3000, () => {
-  console.log('Server is running on http://localhost:3000')
-})
+// start server
+app.listen(3000, () => console.log('Server running at http://localhost:3000'));
