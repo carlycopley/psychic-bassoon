@@ -25,3 +25,17 @@ User must create their breakfast items which will be turned into buttons. The bu
 
 The main branch was successfully running the attendance app. I created a breakfastBuddy branch off of the main branch to do my work. I used Git Bash and Visual Studio Code to work on my repository locally. I then pushed my code to Github when I was finished and merged breakfastBudddy onto main: Issue #1.
 I used Google Cloud Platform to restart my PM2. This got my production app running. To get it running on Render, I realized it was currently using my dev branch. I was no longer using my dev branch because it had been pushed to main, so I changed the source branch to main and this helped get my app running. I deleted my dev branch and my breakfastBuddy branch after that. 
+
+## Stack
+* node.js
+* express.js
+* MongoDB
+* RESTful API
+* nodemon
+* dotenv
+* Render
+* normalize.css
+* Bootstrap 5
+* jQuery / jQuery UI (optional)
+* .yaml (GitHub workflow)
+* GCP
