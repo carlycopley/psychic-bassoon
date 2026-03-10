@@ -1,273 +1,264 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CIS 486 - Attendance Tracker</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-      background-color: #f5f5f5;
-    }
-    .container {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    h1, h2 {
-      color: #333;
-    }
-    .class-info {
-      background: #e8f4fd;
-      border-left: 4px solid #2196F3;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    input {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 16px;
-    }
-    button {
-      background: #2196F3;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 16px;
-      margin-right: 10px;
-    }
-    button:hover {
-      background: #1976D2;
-    }
-    .delete-btn {
-      background: #f44336;
-    }
-    .delete-btn:hover {
-      background: #d32f2f;
-    }
-    .edit-btn {
-      background: #ff9800;
-    }
-    .edit-btn:hover {
-      background: #f57c00;
-    }
-    .message {
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 4px;
-    }
-    .success {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-    }
-    .error {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-    }
-    .record {
-      background: #f8f9fa;
-      padding: 10px;
-      margin: 5px 0;
-      border-radius: 4px;
-      border: 1px solid #dee2e6;
-    }
-    #attendanceList {
-      max-height: 400px;
-      overflow-y: auto;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Breakfast Buddy</title>
+
+    <style>
+        body {
+            background-color: #e2c4f3;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            color: #b45898;
+            text-align: center;
+            background-color: #ffffff;
+        }
+
+        h2,
+        h3 {
+            color: #b14490;
+        }
+
+        #inputSection,
+        #selectSection,
+        #logSection {
+            margin: 20px;
+            padding: 20px;
+            background-color: #f9e1f7;
+            border-radius: 10px;
+        }
+
+        #inputSection {
+            width: 400px;
+        }
+
+        #foodInput {
+            width: 75%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #createBtn,
+        #logBtn {
+            background-color: #b45898;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        #foodButtons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        #foodButtons button:not(.deleteBtn, .selected) {
+            background-color: #b993a9;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+
+        .selected {
+            background-color: rgb(155, 228, 155);
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+
+        .deleteBtn,
+        .deleteBtn2 {
+            background-color: red;
+            color: white;
+            border: none;
+            margin-left: 3px;
+            cursor: pointer;
+        }
+
+        .editBtn {
+            background-color: #b45898;
+            color: white;
+            border: none;
+            margin-left: 3px;
+            cursor: pointer;
+        }
+
+        #breakList li {
+            color: #b14490;
+            font-size: 18px;
+        }
+    </style>
 </head>
+
 <body>
-  <!-- Class Information Section -->
-  <div class="container class-info">
-    <h1>Class Information</h1>
-    <div id="classInfo">Loading class information...</div>
-  </div>
 
-  <!-- Attendance Form -->
-  <div class="container">
-    <h2>Student Attendance</h2>
-    <div id="message"></div>
-    
-    <form id="attendanceForm">
-      <div class="form-group">
-        <label for="studentName">Student Name:</label>
-        <input type="text" id="studentName" required>
-      </div>
-      
-      <div class="form-group">
-        <label for="date">Today's Date:</label>
-        <input type="text" id="date" required placeholder="February 3, 2026">
-      </div>
-      
-      <div class="form-group">
-        <label for="keyword">Keyword from Board:</label>
-        <input type="text" id="keyword" required>
-      </div>
-      
-      <button type="submit">Record Attendance</button>
-      <button type="button" onclick="loadAttendance()">Refresh List</button>
-    </form>
-  </div>
+    <h1>Welcome to Breakfast Buddy where you can track your breakfast every morning!</h1>
 
-  <!-- Attendance Records -->
-  <div class="container">
-    <h2>Attendance Records</h2>
-    <div id="attendanceList">Loading attendance records...</div>
-  </div>
+    <div id="inputSection">
+        <h2>Create A New Breakfast Item Here</h2>
 
-  <script>
-    let editingId = null;
+        <input id="foodInput" type="text" placeholder="Add breakfast item">
+        <button id="createBtn" onclick="createFoodButton()">Create Button</button>
+    </div>
 
-    // Load class information on page load
-    async function loadClassInfo() {
-      try {
-        const response = await fetch('/api/class');
-        const classData = await response.json();
-        
-        document.getElementById('classInfo').innerHTML = `
-          <h3>${classData.courseNumber} - ${classData.courseName}</h3>
-          <p><strong>Nickname:</strong> ${classData.nickname}</p>
-          <p><strong>Semester:</strong> ${classData.semester}</p>
-          <p><strong>Calendar:</strong> ${classData.calendar}</p>
-        `;
-      } catch (error) {
-        document.getElementById('classInfo').innerHTML = 'Error loading class information';
-      }
-    }
+    <div id="selectSection">
+        <h2>Select Today's Breakfast By Clicking On Your Existing Breakfast Items</h2>
 
-    // Handle form submission
-    document.getElementById('attendanceForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const studentName = document.getElementById('studentName').value;
-      const date = document.getElementById('date').value;
-      const keyword = document.getElementById('keyword').value;
+        <div id="foodButtons"></div>
 
-      try {
-        const url = editingId ? `/api/attendance/${editingId}` : '/api/attendance';
-        const method = editingId ? 'PUT' : 'POST';
-        
-        const response = await fetch(url, {
-          method: method,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            studentName,
-            date,
-            keyword
-          })
+        <br>
+        <button id="logBtn" onclick="submitBreakfast()">Log Breakfast</button>
+    </div>
+
+    <div id="logSection">
+        <h2>Breakfast Log</h2>
+        <h3>Sorted From Newest to Oldest</h3>
+        <ul id="breakList"></ul>
+    </div>
+
+    <script>
+        document.getElementById("foodInput").addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                createFoodButton();
+            }
         });
 
-        const result = await response.json();
-        
-        if (response.ok) {
-          showMessage(result.message, 'success');
-          document.getElementById('attendanceForm').reset();
-          if (editingId) {
-            editingId = null;
-            document.querySelector('button[type="submit"]').textContent = 'Record Attendance';
-          }
-          loadAttendance();
-        } else {
-          showMessage(result.error, 'error');
-        }
-      } catch (error) {
-        showMessage('Error submitting form', 'error');
-      }
-    });
+        async function createFoodButton() {
+            let food = document.getElementById("foodInput").value.trim();
+            if (!food) return;
 
-    // Load attendance records
-    async function loadAttendance() {
-      try {
-        const response = await fetch('/api/attendance');
-        const records = await response.json();
-        
-        const listDiv = document.getElementById('attendanceList');
-        
-        if (records.length === 0) {
-          listDiv.innerHTML = '<p>No attendance records yet.</p>';
-          return;
+            food = food.charAt(0).toUpperCase() + food.slice(1).toLowerCase();
+            document.getElementById("foodInput").value = "";
+
+            await fetch('/api/breakfast', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: food })
+            });
+
+            loadBreakfastItems(); // refresh buttons from server
         }
 
-        listDiv.innerHTML = records.map(record => `
-          <div class="record">
-            <strong>${record.studentName}</strong> - ${record.date}<br>
-            <small>Keyword: ${record.keyword} | Recorded: ${new Date(record.timestamp).toLocaleString()}</small><br>
-            <button class="edit-btn" onclick="editRecord('${record._id}', '${record.studentName}', '${record.date}', '${record.keyword}')">Edit</button>
-            <button class="delete-btn" onclick="deleteRecord('${record._id}')">Delete</button>
-          </div>
-        `).join('');
-      } catch (error) {
-        document.getElementById('attendanceList').innerHTML = 'Error loading attendance records';
-      }
-    }
+        async function loadBreakfastItems() {
+            try {
+                const res = await fetch('/api/breakfast');
+                const items = await res.json();
+                const container = document.getElementById('foodButtons');
+                container.innerHTML = '';
 
-    // Edit record
-    function editRecord(id, studentName, date, keyword) {
-      editingId = id;
-      document.getElementById('studentName').value = studentName;
-      document.getElementById('date').value = date;
-      document.getElementById('keyword').value = keyword;
-      document.querySelector('button[type="submit"]').textContent = 'Update Attendance';
-      showMessage('Editing record - click Update to save changes', 'success');
-    }
+                items.forEach(item => {
+                    const div = document.createElement('div');
+                    const btn = document.createElement('button');
+                    btn.textContent = item.name;
+                    btn.onclick = () => btn.classList.toggle('selected');
 
-    // Delete record
-    async function deleteRecord(id) {
-      if (!confirm('Are you sure you want to delete this record?')) return;
-      
-      try {
-        const response = await fetch(`/api/attendance/${id}`, {
-          method: 'DELETE'
-        });
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = '✕';
+                    deleteBtn.classList.add('deleteBtn');
+                    deleteBtn.onclick = async () => {
+                        await fetch(`/api/breakfast/${item._id}`, { method: 'DELETE' });
+                        loadBreakfastItems();
+                    };
 
-        const result = await response.json();
-        
-        if (response.ok) {
-          showMessage(result.message, 'success');
-          loadAttendance();
-        } else {
-          showMessage(result.error, 'error');
+                    div.appendChild(btn);
+                    div.appendChild(deleteBtn);
+                    container.appendChild(div);
+                });
+            } catch (err) {
+                console.error(err);
+            }
         }
-      } catch (error) {
-        showMessage('Error deleting record', 'error');
-      }
-    }
 
-    // Show message
-    function showMessage(text, type) {
-      const messageDiv = document.getElementById('message');
-      messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
-      setTimeout(() => {
-        messageDiv.innerHTML = '';
-      }, 3000);
-    }
+        async function submitBreakfast() {
+            const selectedBtns = document.querySelectorAll("#foodButtons button.selected");
+            if (!selectedBtns.length) return;
 
-    // Initialize page
-    loadClassInfo();
-    loadAttendance();
+            const foods = Array.from(selectedBtns).map(b => b.textContent);
+            const date = new Date().toISOString();
 
-    // Set today's date as default
-    document.getElementById('date').value = 'February 3, 2026';
-  </script>
+            await fetch('/api/logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ foods, date })
+            });
+
+            selectedBtns.forEach(btn => btn.classList.remove('selected'));
+            loadMealLogs(); // only render from server
+        }
+
+        async function loadMealLogs() {
+            try {
+                const res = await fetch('/api/logs');
+                const logs = await res.json();
+                const ul = document.getElementById('breakList');
+                ul.innerHTML = '';
+
+                logs.sort((a, b) => new Date(b.date) - new Date(a.date)); // newest first
+
+                logs.forEach(log => {
+                    const li = document.createElement('li');
+
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = `(${new Date(log.date).toLocaleString()}) ${log.foods.join(', ')}`;
+
+                    const editBtn = document.createElement('button');
+                    editBtn.classList.add('editBtn');
+                    editBtn.textContent = 'Edit';
+
+                    editBtn.onclick = async () => {
+                        // Prompt for foods
+                        const newFoods = prompt('Edit this breakfast log (comma-separated):', log.foods.join(', '));
+                        if (!newFoods) return;
+                        const updatedFoods = newFoods.split(',').map(f => f.trim());
+
+                        // Prompt for date
+                        const newDate = prompt('Edit the date/time of this log:', log.date);
+                        if (!newDate) return;
+
+                        // Send PUT request to update both foods and date
+                        await fetch(`/api/logs/${log._id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ foods: updatedFoods, date: newDate })
+                        });
+
+                        loadMealLogs(); // refresh logs from server
+                    };
+
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.classList.add('deleteBtn2');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = async () => {
+                    await fetch(`/api/logs/${log._id}`, { method: 'DELETE' });
+                    loadMealLogs();
+                };
+
+                li.appendChild(textSpan);
+                li.appendChild(editBtn);
+                li.appendChild(deleteBtn);
+                ul.appendChild(li);
+            });
+        } catch (err) {
+            console.error(err);
+        }
+        }
+
+        loadBreakfastItems();
+        loadMealLogs();
+    </script>
+
+
+
 </body>
+
 </html>
