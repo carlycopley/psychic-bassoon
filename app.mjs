@@ -141,31 +141,31 @@ app.put('/api/logs/:id', async (req, res) => {
 
 // UPDATE - edit a meal log
 app.put('/api/logs/:id', async (req, res) => {
-  try {
-    const { foods } = req.body;
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
+        const { foods, date } = req.body;
 
-    if (!foods || !Array.isArray(foods)) {
-      return res.status(400).json({ error: 'Invalid foods array' });
+        if (!foods || !Array.isArray(foods) || !date) {
+            return res.status(400).json({ error: 'Invalid foods or date' });
+        }
+
+        const db = client.db('breakfastBuddy');
+        const col = db.collection('logs');
+
+        const result = await col.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: { foods, date } }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ error: 'Log not found' });
+        }
+
+        res.json({ message: 'Log updated successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to update log' });
     }
-
-    const db = client.db('breakfastBuddy');
-    const col = db.collection('logs');
-
-    const result = await col.updateOne(
-      { _id: new ObjectId(id) },
-      { $set: { foods, updatedAt: new Date() } }
-    );
-
-    if (result.matchedCount === 0) {
-      return res.status(404).json({ error: 'Log not found' });
-    }
-
-    res.json({ message: 'Log updated!' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to update log' });
-  }
 });
 
 // DELETE - remove a meal log
